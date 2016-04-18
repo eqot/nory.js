@@ -3,23 +3,56 @@ import http from 'http'
 
 const URL_BASE = 'http://search.maven.org/solrsearch/select?rows=20&wt=json&q='
 
-const args = argv.run()
-const command = args.targets[0]
-switch (command) {
-  case 'search':
-    searchArtifactory(args.targets[1])
+function execute() {
+  const args = argv.run()
+  const [command, name] = args.targets
+  switch (command) {
+    case 'search':
+      searchArtifactory(name)
+      break;
+
+    case 'install':
+      installArtifactory(name)
+      break;
+  }
 }
 
 function searchArtifactory (keyword) {
-  getMetaData(keyword)
-    .then(JSON.parse)
-    .then(res => res.response)
-    .then((data) => {
-      data.docs.forEach((art) => {
+  getArtifactoryInfo(keyword)
+    .then(arts => {
+      arts.forEach(art => {
         const name = getArtifactoryNameAndVersion(art)
         const matchMessage = (art.a === keyword) ? '    <--- exact match' : ''
         console.log(name + matchMessage)
       })
+    })
+}
+
+function installArtifactory (keyword) {
+  getExatcMatchArtifactory(keyword)
+    .then(art => {
+      const name = getArtifactoryNameAndVersion(art)
+      console.log(name)
+    })
+}
+
+function getArtifactoryInfo (keyword) {
+  return getMetaData(keyword)
+    .then(JSON.parse)
+    .then(res => res.response.docs)
+}
+
+function getExatcMatchArtifactory (keyword) {
+  return getArtifactoryInfo(keyword)
+    .then(arts => {
+      let result = null
+      arts.forEach(art => {
+        if (art.a === keyword) {
+          result = art
+        }
+      })
+
+      return result
     })
 }
 
@@ -46,3 +79,5 @@ function getMetaData (keyword) {
     }).on('error', reject)
   })
 }
+
+execute()
