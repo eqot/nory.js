@@ -12,14 +12,13 @@ export default class Artifactory {
   static getExatcMatch (keyword) {
     return Artifactory.getInfo(keyword)
       .then(arts => {
-        let result = null
-        arts.forEach(art => {
-          if (art.a === keyword) {
-            result = art
+        for (let i = 0; i < arts.length; i++) {
+          if (arts[i].a === keyword) {
+            return arts[i]
           }
-        })
+        }
 
-        return result
+        return null
       })
   }
 
