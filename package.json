@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "description": "",
   "main": "src/index.js",
-  "dependencies": {},
+  "dependencies": {
+    "argv": "0.0.2"
+  },
   "devDependencies": {
     "babel-cli": "^6.7.5",
     "babel-istanbul": "^0.7.0",
@@ -17,5 +19,15 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "babel": {
+    "plugins": [
+      "transform-runtime"
+    ],
+    "presets": [
+      "es2015",
+      "react",
+      "stage-0"
+    ]
+  }
 }
