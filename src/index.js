@@ -1,6 +1,7 @@
 import argv from 'argv'
 
 import artifactory from './artifactory'
+import gradle from './gradle'
 
 function execute() {
   const args = argv.run()
@@ -31,7 +32,7 @@ function installArtifactory (keyword) {
   artifactory.getExatcMatch(keyword)
     .then(art => {
       const name = artifactory.getNameAndVersion(art)
-      console.log(name)
+      gradle.injectArtifactory(name)
     })
 }
 
