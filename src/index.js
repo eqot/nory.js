@@ -7,10 +7,12 @@ function execute() {
   const args = argv.run()
   const [command, name] = args.targets
   switch (command) {
+    case 's':
     case 'search':
       searchArtifactory(name)
       break
 
+    case 'i':
     case 'install':
       installArtifactory(name)
       break
