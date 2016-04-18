@@ -8,11 +8,11 @@ function execute() {
   switch (command) {
     case 'search':
       searchArtifactory(name)
-      break;
+      break
 
     case 'install':
       installArtifactory(name)
-      break;
+      break
   }
 }
 
