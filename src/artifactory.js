@@ -23,7 +23,7 @@ export default class Artifactory {
   }
 
   static getNameAndVersion (art) {
-    return art.g + '.' + art.a + ':' + art.latestVersion
+    return art.g + ':' + art.a + ':' + art.latestVersion
   }
 
   static getMetaData (keyword) {
