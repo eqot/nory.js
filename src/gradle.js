@@ -43,29 +43,45 @@ export default class Gradle {
     console.log(table.toString())
 
     if (!foundUpdate) {
-      console.log('All artifacts up to date'.green)
+      console.log('All artifacts up to date.')
     }
   }
 
   static updateArtifacts (current, latest) {
+    let table = new Table({
+      head: ['groupId', 'artifactId', 'current', 'updated'],
+      style: { head: ['cyan'] }
+    })
+
     let output = []
-    let isUpdated = false
+    let foundUpdate = false
     Gradle.parseFileForDependencies(art => {
       const version = latest[art.name] ? latest[art.name].latestVersion : art.version
       output.push('    compile \'' + art.group + ':' + art.name + ':' + version + '\'')
 
-      if (latest[art.name] && latest[art.name].latestVersion !== art.version) {
-        isUpdated = true
+      let latestVersion = ''
+      if (latest[art.name]) {
+        latestVersion = latest[art.name].latestVersion
+
+        if (latestVersion !== art.version) {
+          foundUpdate = true
+
+          latestVersion = latestVersion.green
+          table.push(
+            [art.group, art.name, art.version, latestVersion]
+          )
+        }
       }
     }, line => {
       output.push(line)
     }).then(() => {
-      if (isUpdated) {
+      if (foundUpdate) {
         fs.writeFile(DEFAULT_FILE, output.join('\n'))
-        // console.log(output.join('\n'))
-        console.log('Successfully updated.')
+
+        console.log(table.toString())
+        console.log('\u2713'.green, 'Successfully updated.')
       } else {
-        console.log('All artifacts up to date')
+        console.log('All artifacts up to date.')
       }
     })
   }
