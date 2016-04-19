@@ -3,7 +3,7 @@ import fs from 'fs'
 const DEFAULT_FILE = './app/build.gradle'
 
 export default class Gradle {
-  static getArtifactory () {
+  static getArtifact () {
     return new Promise((resolve, reject) => {
       let arts = []
       Gradle.parseFileForDependencies(art => {
@@ -41,7 +41,7 @@ export default class Gradle {
     })
   }
 
-  static injectArtifactory (artifactory) {
+  static injectArtifact (artifactory) {
     Gradle.load(DEFAULT_FILE)
       .then(content => content.split('\n'))
       .then(lines => {

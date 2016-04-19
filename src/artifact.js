@@ -2,15 +2,15 @@ import http from 'http'
 
 const URL_BASE = 'http://search.maven.org/solrsearch/select?rows=20&wt=json&q='
 
-export default class Artifactory {
+export default class Artifact {
   static getInfo (keyword) {
-    return Artifactory.getMetaData(keyword)
+    return Artifact.getMetaData(keyword)
       .then(JSON.parse)
       .then(res => res.response.docs)
   }
 
   static getExatcMatch (keyword) {
-    return Artifactory.getInfo(keyword)
+    return Artifact.getInfo(keyword)
       .then(arts => {
         for (let i = 0; i < arts.length; i++) {
           if (arts[i].a === keyword) {

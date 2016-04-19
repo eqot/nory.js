@@ -1,6 +1,6 @@
 import argv from 'argv'
 
-import artifactory from './artifactory'
+import artifact from './artifact'
 import gradle from './gradle'
 
 function execute() {
@@ -9,42 +9,42 @@ function execute() {
   switch (command) {
     case 's':
     case 'search':
-      searchArtifactory(name)
+      searchArtifact(name)
       break
 
     case 'i':
     case 'install':
-      installArtifactory(name)
+      installArtifact(name)
       break
 
     case 'u':
     case 'update':
-      updateArtifactory()
+      updateArtifact()
       break
   }
 }
 
-function searchArtifactory (keyword) {
-  artifactory.getInfo(keyword)
+function searchArtifact (keyword) {
+  artifact.getInfo(keyword)
     .then(arts => {
       arts.forEach(art => {
-        const name = artifactory.getNameAndVersion(art)
+        const name = artifact.getNameAndVersion(art)
         const matchMessage = (art.a === keyword) ? '    <--- exact match' : ''
         console.log(name + matchMessage)
       })
     })
 }
 
-function installArtifactory (keyword) {
-  artifactory.getExatcMatch(keyword)
+function installArtifact (keyword) {
+  artifact.getExatcMatch(keyword)
     .then(art => {
-      const name = artifactory.getNameAndVersion(art)
-      gradle.injectArtifactory(name)
+      const name = artifact.getNameAndVersion(art)
+      gradle.injectArtifact(name)
     })
 }
 
-function updateArtifactory () {
-  gradle.getArtifactory()
+function updateArtifact () {
+  gradle.getArtifact()
     .then(console.log)
 }
 
