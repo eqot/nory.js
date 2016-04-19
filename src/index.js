@@ -21,6 +21,11 @@ function execute() {
     case 'check':
       checkArtifact()
       break
+
+    case 'u':
+    case 'update':
+      updateArtifact()
+      break
   }
 }
 
@@ -49,6 +54,16 @@ function checkArtifact () {
       artifact.getLatestVersion(currentArtifacts)
         .then(latestArtifacts => {
           gradle.compareArtifacts(currentArtifacts, latestArtifacts)
+        })
+    })
+}
+
+function updateArtifact () {
+  gradle.getArtifacts()
+    .then(currentArtifacts => {
+      artifact.getLatestVersion(currentArtifacts)
+        .then(latestArtifacts => {
+          gradle.updateArtifacts(currentArtifacts, latestArtifacts)
         })
     })
 }

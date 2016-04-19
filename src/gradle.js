@@ -32,29 +32,61 @@ export default class Gradle {
     }
   }
 
+  static updateArtifacts (current, latest) {
+    let output = []
+    let isUpdated = false
+    Gradle.parseFileForDependencies(art => {
+      const version = latest[art.name] ? latest[art.name].latestVersion : art.version
+      output.push('    compile \'' + art.group + ':' + art.name + ':' + version + '\'')
+
+      if (latest[art.name] && latest[art.name].latestVersion !== art.version) {
+        isUpdated = true
+      }
+    }, line => {
+      output.push(line)
+    }).then(() => {
+      if (isUpdated) {
+        fs.writeFile(DEFAULT_FILE, output.join('\n'))
+        // console.log(output.join('\n'))
+        console.log('Successfully updated.')
+      } else {
+        console.log('All artifacts up to date')
+      }
+    })
+  }
+
   static parseFile (callback) {
     return Gradle.load(DEFAULT_FILE)
       .then(content => content.split('\n'))
       .then(lines => lines.forEach(callback))
   }
 
-  static parseFileForDependencies (callback) {
+  static parseFileForDependencies (callback, callbackOutside) {
     let isInside = false
     return Gradle.parseFile(line => {
+      let isCalled = false
       if (!isInside) {
         if (line.match(/^\s*dependencies\s*{$/)) {
           isInside = true
         }
       } else {
         if (line.match(/^\s*compile\s+'(.+):(.+):(.+)'\s*$/)) {
-          callback({
-            group: RegExp.$1,
-            name: RegExp.$2,
-            version: RegExp.$3
-          })
+          if (callback) {
+            callback({
+              group: RegExp.$1,
+              name: RegExp.$2,
+              version: RegExp.$3
+            })
+          }
+
+          isCalled = true
         } else if (line.match(/^\s*}\s*$/)) {
           isInside = false
         }
+      }
+
+      if (!isCalled && callbackOutside) {
+        callbackOutside(line)
       }
     })
   }
