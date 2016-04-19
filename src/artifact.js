@@ -1,4 +1,6 @@
 import http from 'http'
+import Table from 'cli-table'
+import colors from 'colors'
 
 const URL_BASE = 'http://search.maven.org/solrsearch/select?rows=20&wt=json&q='
 
@@ -7,6 +9,22 @@ export default class Artifact {
     return Artifact.getMetaData(keyword)
       .then(JSON.parse)
       .then(res => res.response.docs)
+  }
+
+  static showSearchResult (arts, keyword) {
+    let table = new Table({
+      head: ['groupId', 'artifactId', 'version', 'match'],
+      style: { head: ['cyan'] }
+    })
+
+    arts.forEach(art => {
+      const matchFlag = (art.a === keyword) ? '\u2713'.green : ''
+      table.push(
+        [art.g, art.a, art.latestVersion, matchFlag]
+      )
+    })
+
+    console.log(table.toString())
   }
 
   static getExatcMatch (keyword) {

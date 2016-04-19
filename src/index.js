@@ -32,11 +32,7 @@ function execute() {
 function searchArtifact (keyword) {
   artifact.getInfo(keyword)
     .then(arts => {
-      arts.forEach(art => {
-        const name = artifact.getNameAndVersion(art)
-        const matchMessage = (art.a === keyword) ? '    <--- exact match' : ''
-        console.log(name + matchMessage)
-      })
+      artifact.showSearchResult(arts, keyword)
     })
 }
 
