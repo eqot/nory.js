@@ -122,11 +122,16 @@ export default class Gradle {
     })
   }
 
-  static injectArtifact (artifactory) {
+  static injectArtifact (art) {
     Gradle.load(DEFAULT_FILE)
       .then(content => content.split('\n'))
       .then(lines => {
-        const injection = '    compile \'' + artifactory + '\''
+        let table = new Table({
+          head: ['groupId', 'artifactId', 'version'],
+          style: { head: ['cyan'] }
+        })
+
+        const injection = '    compile \'' + art.g + ':' + art.a + ':' + art.latestVersion + '\''
 
         let output = []
         let isInside = false
@@ -142,6 +147,10 @@ export default class Gradle {
             } else if (line === '}') {
               if (!isInstalled) {
                 output.push(injection)
+
+                table.push(
+                  [art.g, art.a, art.latestVersion]
+                )
               }
 
               isInside = false
@@ -153,9 +162,11 @@ export default class Gradle {
 
         if (!isInstalled) {
           fs.writeFile(DEFAULT_FILE, output.join('\n'))
-          console.log(artifactory + ' has been successfully installed.')
+
+          console.log(table.toString())
+          console.log('\u2713'.green, 'Successfully installed.')
         } else {
-          console.warn(artifactory + ' has been already installed.')
+          console.warn('\u2757 ', art.a + ' has been already installed.')
         }
       })
   }

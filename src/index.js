@@ -38,10 +38,7 @@ function searchArtifact (keyword) {
 
 function installArtifact (keyword) {
   artifact.getExatcMatch(keyword)
-    .then(art => {
-      const name = artifact.getNameAndVersion(art)
-      gradle.injectArtifact(name)
-    })
+    .then(gradle.injectArtifact)
 }
 
 function checkArtifact () {
