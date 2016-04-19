@@ -17,9 +17,9 @@ function execute() {
       installArtifact(name)
       break
 
-    case 'u':
-    case 'update':
-      updateArtifact()
+    case 'c':
+    case 'check':
+      checkArtifact()
       break
   }
 }
@@ -43,9 +43,14 @@ function installArtifact (keyword) {
     })
 }
 
-function updateArtifact () {
-  gradle.getArtifact()
-    .then(console.log)
+function checkArtifact () {
+  gradle.getArtifacts()
+    .then(currentArtifacts => {
+      artifact.getLatestVersion(currentArtifacts)
+        .then(latestArtifacts => {
+          gradle.compareArtifacts(currentArtifacts, latestArtifacts)
+        })
+    })
 }
 
 execute()

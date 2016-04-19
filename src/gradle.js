@@ -3,7 +3,7 @@ import fs from 'fs'
 const DEFAULT_FILE = './app/build.gradle'
 
 export default class Gradle {
-  static getArtifact () {
+  static getArtifacts () {
     return new Promise((resolve, reject) => {
       let arts = []
       Gradle.parseFileForDependencies(art => {
@@ -12,6 +12,24 @@ export default class Gradle {
         resolve(arts)
       })
     })
+  }
+
+  static compareArtifacts (current, latest) {
+    let result = []
+    current.forEach(art => {
+      if (latest[art.name] && latest[art.name].latestVersion !== art.version) {
+        result.push(art)
+      }
+    })
+
+    if (result.length > 0) {
+      result.forEach(art => {
+        const name = art.group + ':' + art.name
+        console.log(name + '    ' + art.version + '    ' + latest[art.name].latestVersion)
+      })
+    } else {
+      console.log('All artifacts up to date')
+    }
   }
 
   static parseFile (callback) {
