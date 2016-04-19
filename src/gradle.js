@@ -10,29 +10,29 @@ export default class Gradle {
         const injection = '    compile \'' + artifactory + '\''
 
         let output = []
-        let state = 'before'
-        let isAlreadyInstalled = false
+        let isInside = false
+        let isInstalled = false
         lines.forEach(line => {
-          if (state === 'before') {
+          if (!isInside) {
             if (line === 'dependencies {') {
-              state = 'in'
+              isInside = true
             }
-          } else if (state === 'in') {
+          } else {
             if (line === injection) {
-              isAlreadyInstalled = true
+              isInstalled = true
             } else if (line === '}') {
-              if (!isAlreadyInstalled) {
+              if (!isInstalled) {
                 output.push(injection)
               }
 
-              state = 'after'
+              isInside = false
             }
           }
 
           output.push(line)
         })
 
-        if (!isAlreadyInstalled) {
+        if (!isInstalled) {
           fs.writeFile(DEFAULT_FILE, output.join('\n'))
           console.log(artifactory + ' has been successfully installed.')
         } else {
