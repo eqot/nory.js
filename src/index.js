@@ -16,6 +16,11 @@ function execute() {
     case 'install':
       installArtifactory(name)
       break
+
+    case 'u':
+    case 'update':
+      updateArtifactory()
+      break
   }
 }
 
@@ -36,6 +41,11 @@ function installArtifactory (keyword) {
       const name = artifactory.getNameAndVersion(art)
       gradle.injectArtifactory(name)
     })
+}
+
+function updateArtifactory () {
+  gradle.getArtifactory()
+    .then(console.log)
 }
 
 execute()
