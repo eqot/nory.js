@@ -24,7 +24,7 @@ export default class Gradle {
     let isInside = false
     return Gradle.parseFile(line => {
       if (!isInside) {
-        if (line === 'dependencies {') {
+        if (line.match(/^\s*dependencies\s*{$/)) {
           isInside = true
         }
       } else {
@@ -34,7 +34,7 @@ export default class Gradle {
             name: RegExp.$2,
             version: RegExp.$3
           })
-        } else if (line === '}') {
+        } else if (line.match(/^\s*}\s*$/)) {
           isInside = false
         }
       }
