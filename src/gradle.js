@@ -1,4 +1,6 @@
 import fs from 'fs'
+import Table from 'cli-table'
+import colors from 'colors'
 
 const DEFAULT_FILE = './app/build.gradle'
 
@@ -15,20 +17,33 @@ export default class Gradle {
   }
 
   static compareArtifacts (current, latest) {
-    let result = []
-    current.forEach(art => {
-      if (latest[art.name] && latest[art.name].latestVersion !== art.version) {
-        result.push(art)
-      }
+    let table = new Table({
+      head: ['groupId', 'artifactId', 'current', 'latest'],
+      style: { head: ['cyan'] }
     })
 
-    if (result.length > 0) {
-      result.forEach(art => {
-        const name = art.group + ':' + art.name
-        console.log(name + '    ' + art.version + '    ' + latest[art.name].latestVersion)
-      })
-    } else {
-      console.log('All artifacts up to date')
+    let foundUpdate = false
+    current.forEach(art => {
+      let latestVersion = ''
+      if (latest[art.name]) {
+        latestVersion = latest[art.name].latestVersion
+
+        if (latestVersion !== art.version) {
+          latestVersion = latestVersion.red
+
+          foundUpdate = true
+        }
+      }
+
+      table.push(
+        [art.group, art.name, art.version, latestVersion]
+      )
+    })
+
+    console.log(table.toString())
+
+    if (!foundUpdate) {
+      console.log('All artifacts up to date'.green)
     }
   }
 
