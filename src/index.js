@@ -3,7 +3,7 @@ import argv from 'argv'
 import artifact from './artifact'
 import gradle from './gradle'
 
-function execute() {
+export default function execute() {
   const args = argv.run()
   const [command, name] = args.targets
   switch (command) {
@@ -60,5 +60,3 @@ function updateArtifact () {
         })
     })
 }
-
-execute()
