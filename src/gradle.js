@@ -1,7 +1,8 @@
 import fs from 'fs'
 
 export default class Gradle {
-  static DEFAULT_FILE = './app/build.gradle'
+  static DEFAULT_BASENAME = 'build.gradle'
+  static DEFAULT_FILE = './app/' + Gradle.DEFAULT_BASENAME
 
   static State = {
     DEPENDENCIES_OUTSIDE: -1,
@@ -10,10 +11,10 @@ export default class Gradle {
     DEPENDENCIES_END: 2
   }
 
-  static getArtifacts () {
+  static getArtifacts (file) {
     return new Promise((resolve, reject) => {
       let arts = []
-      Gradle.parseFileForDependencies((line, art) => {
+      Gradle.parseFileForDependencies(file, (line, art) => {
         if (art) {
           arts.push(art)
         }
@@ -21,11 +22,11 @@ export default class Gradle {
     })
   }
 
-  static injectArtifact (art) {
+  static injectArtifact (file, art) {
     return new Promise((resolve, reject) => {
       let output = []
       let isInstalled = false
-      Gradle.parseFileForDependencies((line, foundArt, state) => {
+      Gradle.parseFileForDependencies(file, (line, foundArt, state) => {
         if (state === Gradle.State.DEPENDENCIES_ITEM && foundArt && foundArt.name === art.a) {
           isInstalled = true
         }
@@ -37,7 +38,7 @@ export default class Gradle {
         output.push(line)
       }).then(() => {
         if (!isInstalled) {
-          fs.writeFile(Gradle.DEFAULT_FILE, output.join('\n'))
+          fs.writeFile(file, output.join('\n'))
 
           resolve({
             group: art.g,
@@ -51,11 +52,11 @@ export default class Gradle {
     })
   }
 
-  static updateArtifacts (current, latest) {
+  static updateArtifacts (file, current, latest) {
     return new Promise((resolve, reject) => {
       let result = []
       let output = []
-      Gradle.parseFileForDependencies((line, art) => {
+      Gradle.parseFileForDependencies(file, (line, art) => {
         if (art) {
           const version = latest[art.name] ? latest[art.name].latestVersion : art.version
           output.push('    compile \'' + art.group + ':' + art.name + ':' + version + '\'')
@@ -67,16 +68,16 @@ export default class Gradle {
           output.push(line)
         }
       }).then(() => {
-        fs.writeFile(Gradle.DEFAULT_FILE, output.join('\n'))
+        fs.writeFile(file, output.join('\n'))
 
         resolve(result)
       })
     })
   }
 
-  static parseFile (callback) {
+  static parseFile (file, callback) {
     return new Promise((resolve, reject) => {
-      fs.readFile(Gradle.DEFAULT_FILE, 'utf8', (error, content) => {
+      fs.readFile(file, 'utf8', (error, content) => {
         if (!error) {
           resolve(content)
         } else {
@@ -87,9 +88,9 @@ export default class Gradle {
       .then(lines => lines.forEach(callback))
   }
 
-  static parseFileForDependencies (callback) {
+  static parseFileForDependencies (file, callback) {
     let isInside = false
-    return Gradle.parseFile(line => {
+    return Gradle.parseFile(file, line => {
       let state = Gradle.State.DEPENDENCIES_OUTSIDE
       let isCalled = false
       if (!isInside) {

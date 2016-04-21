@@ -1,3 +1,4 @@
+import path from 'path'
 import argv from 'argv'
 import Table from 'cli-table'
 import colors from 'colors'
@@ -7,9 +8,29 @@ import gradle from './gradle'
 
 const DEFAULT_TABLE_STYLE = { head: ['cyan'] }
 
+const COMMAND_OPTIONS = [
+  {
+    name: 'file',
+    short: 'f',
+    type: 'path',
+    description: 'Specifies file or directory for build.gradle'
+  }
+]
+
 export default function execute() {
-  const args = argv.run()
+  const args = argv.option(COMMAND_OPTIONS).run()
+
   const [command, name] = args.targets
+
+  let {file} = args.options
+  if (file) {
+    if (path.basename(file) !== gradle.DEFAULT_BASENAME) {
+      file = path.resolve(file, gradle.DEFAULT_BASENAME)
+    }
+  } else {
+    file = gradle.DEFAULT_FILE
+  }
+
   switch (command) {
     case 's':
     case 'search':
@@ -18,17 +39,17 @@ export default function execute() {
 
     case 'i':
     case 'install':
-      installArtifact(name)
+      installArtifact(file, name)
       break
 
     case 'c':
     case 'check':
-      checkArtifact()
+      checkArtifact(file)
       break
 
     case 'u':
     case 'update':
-      updateArtifact()
+      updateArtifact(file)
       break
   }
 }
@@ -52,9 +73,11 @@ function searchArtifact (name) {
     })
 }
 
-function installArtifact (name) {
+function installArtifact (file, name) {
   artifact.findExactMatch(name)
-    .then(gradle.injectArtifact)
+    .then(art => {
+      return gradle.injectArtifact(file, art)
+    })
     .then(art => {
       if (art) {
         let table = new Table({
@@ -72,8 +95,8 @@ function installArtifact (name) {
     })
 }
 
-function checkArtifact () {
-  gradle.getArtifacts()
+function checkArtifact (file) {
+  gradle.getArtifacts(file)
     .then(currentArtifacts => artifact.getLatestVersion(currentArtifacts)
       .then(latestArtifacts => {
         let table = new Table({
@@ -88,10 +111,10 @@ function checkArtifact () {
     )
 }
 
-function updateArtifact () {
-  gradle.getArtifacts()
+function updateArtifact (file) {
+  gradle.getArtifacts(file)
     .then(currentArtifacts => artifact.getLatestVersion(currentArtifacts)
-      .then(latestArtifacts => gradle.updateArtifacts(currentArtifacts, latestArtifacts)
+      .then(latestArtifacts => gradle.updateArtifacts(file, currentArtifacts, latestArtifacts)
         .then(arts => {
           if (arts.length === 0) {
             console.log('All artifacts up to date.')
