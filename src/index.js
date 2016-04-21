@@ -1,7 +1,11 @@
 import argv from 'argv'
+import Table from 'cli-table'
+import colors from 'colors'
 
 import artifact from './artifact'
 import gradle from './gradle'
+
+const DEFAULT_STYLE = { head: ['cyan'] }
 
 export default function execute() {
   const args = argv.run()
@@ -29,15 +33,27 @@ export default function execute() {
   }
 }
 
-function searchArtifact (keyword) {
-  artifact.getInfo(keyword)
+function searchArtifact (name) {
+  artifact.find(name)
     .then(arts => {
-      artifact.showSearchResult(arts, keyword)
+      let table = new Table({
+        head: ['groupId', 'artifactId', 'version', 'match'],
+        style: DEFAULT_STYLE
+      })
+
+      arts.forEach(art => {
+        const matchFlag = (art.a === name) ? '\u2713'.green : ''
+        table.push(
+          [art.g, art.a, art.latestVersion, matchFlag]
+        )
+      })
+
+      console.log(table.toString())
     })
 }
 
-function installArtifact (keyword) {
-  artifact.getExatcMatch(keyword)
+function installArtifact (name) {
+  artifact.findExactMatch(name)
     .then(gradle.injectArtifact)
 }
 
