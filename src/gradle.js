@@ -1,6 +1,4 @@
 import fs from 'fs'
-import Table from 'cli-table'
-import colors from 'colors'
 
 export default class Gradle {
   static DEFAULT_FILE = './app/build.gradle'
@@ -33,8 +31,7 @@ export default class Gradle {
         }
 
         if (state === Gradle.State.DEPENDENCIES_END && !isInstalled) {
-          const injection = '    compile \'' + art.g + ':' + art.a + ':' + art.latestVersion + '\''
-          output.push(injection)
+          output.push('    compile \'' + art.g + ':' + art.a + ':' + art.latestVersion + '\'')
         }
 
         output.push(line)
@@ -124,8 +121,5 @@ export default class Gradle {
         callback(line, null, state)
       }
     })
-  }
-
-  static load (filename) {
   }
 }
