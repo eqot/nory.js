@@ -1,11 +1,11 @@
-import http from 'http'
+import https from 'https'
 
 export default class Artifact {
-  static MAVEN_URL = 'http://search.maven.org/solrsearch/select?rows=20&wt=json&q='
+  static MAVEN_URL = 'https://search.maven.org/solrsearch/select?rows=20&wt=json&q='
 
   static find (name) {
     return new Promise ((resolve, reject) => {
-      http.get(Artifact.MAVEN_URL + name, res => {
+      https.get(Artifact.MAVEN_URL + name, res => {
         let body = ''
 
         res.on('data', chunk => {
