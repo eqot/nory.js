@@ -1,11 +1,20 @@
+import url from 'url'
 import https from 'https'
+import HttpsProxyAgent from 'https-proxy-agent'
 
 export default class Artifact {
   static MAVEN_URL = 'https://search.maven.org/solrsearch/select?rows=20&wt=json&q='
 
   static find (name) {
     return new Promise ((resolve, reject) => {
-      https.get(Artifact.MAVEN_URL + name, res => {
+      let options = url.parse(Artifact.MAVEN_URL + name)
+
+      const proxy = process.env.https_proxy || process.env.http_proxy
+      if (proxy) {
+        options.agent = new HttpsProxyAgent(proxy)
+      }
+
+      https.get(options, res => {
         let body = ''
 
         res.on('data', chunk => {
