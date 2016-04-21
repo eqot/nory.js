@@ -2,184 +2,130 @@ import fs from 'fs'
 import Table from 'cli-table'
 import colors from 'colors'
 
-const DEFAULT_FILE = './app/build.gradle'
-
 export default class Gradle {
+  static DEFAULT_FILE = './app/build.gradle'
+
+  static State = {
+    DEPENDENCIES_OUTSIDE: -1,
+    DEPENDENCIES_START: 0,
+    DEPENDENCIES_ITEM: 1,
+    DEPENDENCIES_END: 2
+  }
+
   static getArtifacts () {
     return new Promise((resolve, reject) => {
       let arts = []
-      Gradle.parseFileForDependencies(art => {
-        arts.push(art)
-      }).then(() => {
-        resolve(arts)
-      })
-    })
-  }
-
-  static compareArtifacts (current, latest) {
-    let table = new Table({
-      head: ['groupId', 'artifactId', 'current', 'latest'],
-      style: { head: ['cyan'] }
-    })
-
-    let foundUpdate = false
-    current.forEach(art => {
-      let latestVersion = ''
-      if (latest[art.name]) {
-        latestVersion = latest[art.name].latestVersion
-
-        if (latestVersion !== art.version) {
-          latestVersion = latestVersion.red
-
-          foundUpdate = true
+      Gradle.parseFileForDependencies((line, art) => {
+        if (art) {
+          arts.push(art)
         }
-      }
-
-      table.push(
-        [art.group, art.name, art.version, latestVersion]
-      )
-    })
-
-    console.log(table.toString())
-
-    if (!foundUpdate) {
-      console.log('All artifacts up to date.')
-    }
-  }
-
-  static updateArtifacts (current, latest) {
-    let table = new Table({
-      head: ['groupId', 'artifactId', 'current', 'updated'],
-      style: { head: ['cyan'] }
-    })
-
-    let output = []
-    let foundUpdate = false
-    Gradle.parseFileForDependencies(art => {
-      const version = latest[art.name] ? latest[art.name].latestVersion : art.version
-      output.push('    compile \'' + art.group + ':' + art.name + ':' + version + '\'')
-
-      let latestVersion = ''
-      if (latest[art.name]) {
-        latestVersion = latest[art.name].latestVersion
-
-        if (latestVersion !== art.version) {
-          foundUpdate = true
-
-          latestVersion = latestVersion.green
-          table.push(
-            [art.group, art.name, art.version, latestVersion]
-          )
-        }
-      }
-    }, line => {
-      output.push(line)
-    }).then(() => {
-      if (foundUpdate) {
-        fs.writeFile(DEFAULT_FILE, output.join('\n'))
-
-        console.log(table.toString())
-        console.log('\u2713'.green, 'Successfully updated.')
-      } else {
-        console.log('All artifacts up to date.')
-      }
-    })
-  }
-
-  static parseFile (callback) {
-    return Gradle.load(DEFAULT_FILE)
-      .then(content => content.split('\n'))
-      .then(lines => lines.forEach(callback))
-  }
-
-  static parseFileForDependencies (callback, callbackOutside) {
-    let isInside = false
-    return Gradle.parseFile(line => {
-      let isCalled = false
-      if (!isInside) {
-        if (line.match(/^\s*dependencies\s*{$/)) {
-          isInside = true
-        }
-      } else {
-        if (line.match(/^\s*compile\s+'(.+):(.+):(.+)'\s*$/)) {
-          if (callback) {
-            callback({
-              group: RegExp.$1,
-              name: RegExp.$2,
-              version: RegExp.$3
-            })
-          }
-
-          isCalled = true
-        } else if (line.match(/^\s*}\s*$/)) {
-          isInside = false
-        }
-      }
-
-      if (!isCalled && callbackOutside) {
-        callbackOutside(line)
-      }
+      }).then(() => resolve(arts))
     })
   }
 
   static injectArtifact (art) {
-    Gradle.load(DEFAULT_FILE)
-      .then(content => content.split('\n'))
-      .then(lines => {
-        let table = new Table({
-          head: ['groupId', 'artifactId', 'version'],
-          style: { head: ['cyan'] }
-        })
+    return new Promise((resolve, reject) => {
+      let output = []
+      let isInstalled = false
+      Gradle.parseFileForDependencies((line, foundArt, state) => {
+        if (state === Gradle.State.DEPENDENCIES_ITEM && foundArt && foundArt.name === art.a) {
+          isInstalled = true
+        }
 
-        const injection = '    compile \'' + art.g + ':' + art.a + ':' + art.latestVersion + '\''
+        if (state === Gradle.State.DEPENDENCIES_END && !isInstalled) {
+          const injection = '    compile \'' + art.g + ':' + art.a + ':' + art.latestVersion + '\''
+          output.push(injection)
+        }
 
-        let output = []
-        let isInside = false
-        let isInstalled = false
-        lines.forEach(line => {
-          if (!isInside) {
-            if (line === 'dependencies {') {
-              isInside = true
-            }
-          } else {
-            if (line === injection) {
-              isInstalled = true
-            } else if (line === '}') {
-              if (!isInstalled) {
-                output.push(injection)
-
-                table.push(
-                  [art.g, art.a, art.latestVersion]
-                )
-              }
-
-              isInside = false
-            }
-          }
-
-          output.push(line)
-        })
-
+        output.push(line)
+      }).then(() => {
         if (!isInstalled) {
-          fs.writeFile(DEFAULT_FILE, output.join('\n'))
+          fs.writeFile(Gradle.DEFAULT_FILE, output.join('\n'))
 
-          console.log(table.toString())
-          console.log('\u2713'.green, 'Successfully installed.')
+          resolve({
+            group: art.g,
+            name: art.a,
+            version: art.latestVersion
+          })
         } else {
-          console.warn('\u2757 ', art.a + ' has been already installed.')
+          resolve()
         }
       })
+    })
   }
 
-  static load (filename) {
+  static updateArtifacts (current, latest) {
     return new Promise((resolve, reject) => {
-      fs.readFile(filename, 'utf8', (error, content) => {
+      let result = []
+      let output = []
+      Gradle.parseFileForDependencies((line, art) => {
+        if (art) {
+          const version = latest[art.name] ? latest[art.name].latestVersion : art.version
+          output.push('    compile \'' + art.group + ':' + art.name + ':' + version + '\'')
+
+          if (version !== art.version) {
+            result.push(art)
+          }
+        } else {
+          output.push(line)
+        }
+      }).then(() => {
+        fs.writeFile(Gradle.DEFAULT_FILE, output.join('\n'))
+
+        resolve(result)
+      })
+    })
+  }
+
+  static parseFile (callback) {
+    return new Promise((resolve, reject) => {
+      fs.readFile(Gradle.DEFAULT_FILE, 'utf8', (error, content) => {
         if (!error) {
           resolve(content)
         } else {
           reject()
         }
       })
+    }).then(content => content.split('\n'))
+      .then(lines => lines.forEach(callback))
+  }
+
+  static parseFileForDependencies (callback) {
+    let isInside = false
+    return Gradle.parseFile(line => {
+      let state = Gradle.State.DEPENDENCIES_OUTSIDE
+      let isCalled = false
+      if (!isInside) {
+        if (line.match(/^\s*dependencies\s*{$/)) {
+          isInside = true
+          state = Gradle.State.DEPENDENCIES_START
+        }
+      } else {
+        state = Gradle.State.DEPENDENCIES_ITEM
+
+        if (line.match(/^\s*compile\s+'(.+):(.+):(.+)'\s*$/)) {
+          if (callback) {
+            callback(line, {
+              group: RegExp.$1,
+              name: RegExp.$2,
+              version: RegExp.$3
+            }, state)
+          }
+
+          isCalled = true
+        } else if (line.match(/^\s*}\s*$/)) {
+          isInside = false
+
+          state = Gradle.State.DEPENDENCIES_END
+        }
+      }
+
+      if (!isCalled) {
+        callback(line, null, state)
+      }
     })
+  }
+
+  static load (filename) {
   }
 }
