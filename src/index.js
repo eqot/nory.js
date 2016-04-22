@@ -20,7 +20,9 @@ const COMMAND_OPTIONS = [
 export default function execute() {
   const args = argv.option(COMMAND_OPTIONS).run()
 
-  const [command, name] = args.targets
+  const [command, artName] = args.targets
+  const art = artName ? artName.split(':') : []
+  const [group, name] = (art.length > 1) ? art : [null, art[0]]
 
   let {file} = args.options
   if (file) {
@@ -34,12 +36,12 @@ export default function execute() {
   switch (command) {
     case 's':
     case 'search':
-      searchArtifact(name)
+      searchArtifact(group, name)
       break
 
     case 'i':
     case 'install':
-      installArtifact(file, name)
+      installArtifact(file, group, name)
       break
 
     case 'c':
@@ -54,8 +56,8 @@ export default function execute() {
   }
 }
 
-function searchArtifact (name) {
-  artifact.find(name)
+function searchArtifact (group, name) {
+  artifact.find(group, name)
     .then(arts => {
       let table = new Table({
         head: ['groupId', 'artifactId', 'version', 'match'],
@@ -73,8 +75,8 @@ function searchArtifact (name) {
     })
 }
 
-function installArtifact (file, name) {
-  artifact.findExactMatch(name)
+function installArtifact (file, group, name) {
+  artifact.findExactMatch(group, name)
     .then(art => {
       return gradle.injectArtifact(file, art)
     })

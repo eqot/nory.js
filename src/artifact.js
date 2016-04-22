@@ -5,9 +5,12 @@ import HttpsProxyAgent from 'https-proxy-agent'
 export default class Artifact {
   static MAVEN_URL = 'https://search.maven.org/solrsearch/select?rows=20&wt=json&q='
 
-  static find (name) {
+  static find (group, name) {
     return new Promise ((resolve, reject) => {
-      let options = url.parse(Artifact.MAVEN_URL + name)
+      const searchUrl = Artifact.MAVEN_URL +
+        (group ? `a:"${name}"+AND+g:"${group}"` : name)
+
+      let options = url.parse(searchUrl)
 
       const proxy = process.env.https_proxy || process.env.http_proxy
       if (proxy) {
@@ -33,16 +36,16 @@ export default class Artifact {
       .then(res => res.response.docs)
   }
 
-  static findExactMatch (name) {
-    return Artifact.find(name)
+  static findExactMatch (group, name) {
+    return Artifact.find(group, name)
       .then(arts => {
-        return arts.filter(art => art.a === name)[0]
+        return arts.filter(art => ((art.g === group || group === null) && art.a === name))[0]
       })
   }
 
   static getLatestVersion (arts) {
     return new Promise((resolve, reject) => {
-      Promise.all(arts.map(art => Artifact.findExactMatch(art.name)))
+      Promise.all(arts.map(art => Artifact.findExactMatch(art.group, art.name)))
         .then(latestArtifacts => {
           let result = {}
           latestArtifacts.forEach(art => {
