@@ -126,7 +126,7 @@ function updateArtifact (file) {
             style: DEFAULT_TABLE_STYLE
           })
 
-          table.push(...arts.map(art => getArtifactInfo(art, latestArtifacts, 'green')))
+          table.push(...arts.map(art => getArtifactInfo(art, latestArtifacts)))
 
           console.log(table.toString())
           console.log('\u2713'.green, 'Successfully updated.')
@@ -137,7 +137,7 @@ function updateArtifact (file) {
 function getArtifactInfo (art, latestArtifacts, color) {
   let latestVersion = latestArtifacts[art.name] ? latestArtifacts[art.name].latestVersion : ''
   if (latestVersion !== art.version) {
-    latestVersion = latestVersion[color || 'red']
+    latestVersion = latestVersion[color || 'green']
   }
 
   return [art.group, art.name, art.version, latestVersion]
