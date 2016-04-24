@@ -1,10 +1,10 @@
 {
-  "name": "artman",
+  "name": "nory",
   "version": "0.1.0",
   "description": "",
   "main": "lib/index.js",
   "bin": {
-    "artman": "./bin/artman.js"
+    "nory": "./bin/nory.js"
   },
   "files": [
     "bin",
